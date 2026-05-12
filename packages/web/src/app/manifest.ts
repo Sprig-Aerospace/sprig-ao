@@ -4,9 +4,9 @@ import { getProjectName } from "@/lib/project-name";
 export default function manifest(): MetadataRoute.Manifest {
   const projectName = getProjectName();
   return {
-    name: `ao | ${projectName}`,
-    short_name: "ao",
-    description: "Dashboard for managing parallel AI coding agents",
+    name: `Sprig AO | ${projectName}`,
+    short_name: "Sprig AO",
+    description: "Sprig AO dashboard for managing parallel AI coding agents",
     start_url: "/",
     scope: "/",
     display: "standalone",

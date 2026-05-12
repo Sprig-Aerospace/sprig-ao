@@ -1,8 +1,8 @@
-<h1 align="center">Agent Orchestrator — The Orchestration Layer for Parallel AI Agents</h1>
+<h1 align="center">Sprig AO — The Orchestration Layer for Parallel AI Agents</h1>
 
 <p align="center">
 <a href="https://github.com/ComposioHQ/agent-orchestrator">
-  <img width="800" alt="Agent Orchestrator banner" src="docs/assets/agent_orchestrator_banner.png">
+  <img width="800" alt="Sprig AO banner" src="docs/assets/agent_orchestrator_banner.png">
 </a>
 </p>
 
@@ -21,7 +21,7 @@ Spawn parallel AI coding agents, each in its own git worktree. Agents autonomous
 
 ---
 
-Agent Orchestrator manages fleets of AI coding agents working in parallel on your codebase. Each agent gets its own git worktree, its own branch, and its own PR. When CI fails, the agent fixes it. When reviewers leave comments, the agent addresses them. You only get pulled in when human judgment is needed.
+Sprig AO manages fleets of AI coding agents working in parallel on your codebase. Each agent gets its own git worktree, its own branch, and its own PR. When CI fails, the agent fixes it. When reviewers leave comments, the agent addresses them. You only get pulled in when human judgment is needed.
 
 **Agent-agnostic** (Claude Code, Codex, Aider) · **Runtime-agnostic** (tmux, ConPTY/process, Docker) · **Tracker-agnostic** (GitHub, Linear)
 
@@ -30,7 +30,7 @@ Agent Orchestrator manages fleets of AI coding agents working in parallel on you
 ## See it in action
 
 <a href="https://x.com/agent_wrapper/status/2026329204405723180">
-  <img src="docs/assets/demo-video-tweet.png" alt="Agent Orchestrator demo — AI agents building their own orchestrator" width="560">
+  <img src="docs/assets/demo-video-tweet.png" alt="Sprig AO demo — AI agents building their own orchestrator" width="560">
 </a>
 <br><br>
 <a href="https://x.com/agent_wrapper/status/2026329204405723180"><img src="docs/assets/btn-watch-demo.png" alt="Watch the Demo on X" height="48"></a>
@@ -124,7 +124,7 @@ ao start ~/path/to/another-repo
 4. **Reactions handle feedback** — CI failures and review comments are automatically routed back to the agent
 5. **You review and merge** — you only get pulled in when human judgment is needed
 
-The orchestrator agent uses the [AO CLI](docs/CLI.md) internally to manage sessions. You don't need to learn or use the CLI — the dashboard and orchestrator handle everything.
+The orchestrator agent uses the [AO CLI](docs/CLI.md) internally to manage sessions within Sprig AO. You don't need to learn or use the CLI — the dashboard and orchestrator handle everything.
 
 ## Configuration
 
@@ -204,13 +204,13 @@ Seven plugin slots. Lifecycle stays in core.
 
 All interfaces defined in [`packages/core/src/types.ts`](packages/core/src/types.ts). A plugin implements one interface and exports a `PluginModule`. That's it.
 
-## Why Agent Orchestrator?
+## Why Sprig AO?
 
 Running one AI agent in a terminal is easy. Running 30 across different issues, branches, and PRs is a coordination problem.
 
 **Without orchestration**, you manually: create branches, start agents, check if they're stuck, read CI failures, forward review comments, track which PRs are ready to merge, clean up when done.
 
-**With Agent Orchestrator**, you: `ao start` and walk away. The system handles isolation, feedback routing, and status tracking. You review PRs and make decisions — the rest is automated.
+**With Sprig AO**, you: `ao start` and walk away. The system handles isolation, feedback routing, and status tracking. You review PRs and make decisions — the rest is automated.
 
 ## Documentation
 

@@ -244,7 +244,7 @@ function DashboardInner({
   // Update document title with live attention counts
   useEffect(() => {
     const needsAttention = countNeedingAttention(attentionLevels);
-    const label = projectName ?? "ao";
+    const label = projectName ? `Sprig AO | ${projectName}` : "Sprig AO";
     document.title = needsAttention > 0 ? `${label} (${needsAttention} need attention)` : label;
   }, [attentionLevels, projectName]);
 
@@ -565,7 +565,7 @@ function DashboardInner({
             </button>
             <div className="dashboard-app-header__brand">
               <span className="dashboard-app-header__brand-dot" aria-hidden="true" />
-              <span>Agent Orchestrator</span>
+              <span>Sprig AO</span>
             </div>
             {showHeaderProjectLabel ? (
               <>
