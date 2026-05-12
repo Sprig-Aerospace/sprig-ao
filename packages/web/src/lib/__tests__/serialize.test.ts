@@ -239,6 +239,23 @@ describe("sessionToDashboard", () => {
     expect(dashboard.summaryIsFallback).toBe(false);
   });
 
+  it("should append artifact and validation evidence from metadata", () => {
+    const coreSession = createCoreSession({
+      agentInfo: null,
+      metadata: {
+        summary: "Metadata summary",
+        summaryArtifacts: JSON.stringify([{ label: "screenshot.png" }, { label: "trace.txt" }]),
+        summaryValidations: JSON.stringify([{ status: "passed", label: "pnpm test" }, { status: "failed", label: "pnpm lint" }]),
+      },
+    });
+    const dashboard = sessionToDashboard(coreSession);
+
+    expect(dashboard.summary).toBe(
+      "Metadata summary · Artifacts: screenshot.png, trace.txt · Validation: 1 failed, 1 passed",
+    );
+    expect(dashboard.summaryIsFallback).toBe(false);
+  });
+
   it("should set summaryIsFallback false when no summary exists", () => {
     const coreSession = createCoreSession({
       agentInfo: null,
