@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { mkdtempSync, rmSync, mkdirSync } from "node:fs";
+import { mkdtempSync, rmSync, mkdirSync, realpathSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -83,7 +83,7 @@ describe("canonicalCompareKey", () => {
     try {
       const key = canonicalCompareKey("~");
       // On Windows the result is lowercased; on POSIX it's case-preserved.
-      expect(key.toLowerCase()).toBe(tmpDir.toLowerCase());
+      expect(key.toLowerCase()).toBe(realpathSync(tmpDir).toLowerCase());
     } finally {
       if (originalHome === undefined) delete process.env["HOME"];
       else process.env["HOME"] = originalHome;
