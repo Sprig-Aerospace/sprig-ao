@@ -32,6 +32,14 @@
     "latestVersion": "0.1.0"
   },
   {
+    "id": "agent-jcode",
+    "package": "@aoagents/ao-plugin-agent-jcode",
+    "slot": "agent",
+    "description": "Agent plugin: J-Code CLI",
+    "source": "registry",
+    "latestVersion": "0.1.0"
+  },
+  {
     "id": "notifier-openclaw",
     "package": "@aoagents/ao-plugin-notifier-openclaw",
     "slot": "notifier",
