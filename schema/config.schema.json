@@ -284,6 +284,43 @@
         }
       }
     },
+    "runtimeServiceDefinition": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "ownerRepo": {
+          "type": "string"
+        },
+        "dependsOn": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "runtimeTopology": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["services"],
+      "properties": {
+        "services": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/runtimeServiceDefinition"
+          }
+        },
+        "profiles": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
     "projectConfig": {
       "type": "object",
       "additionalProperties": false,
@@ -324,6 +361,9 @@
         },
         "workspace": {
           "type": "string"
+        },
+        "runtimeTopology": {
+          "$ref": "#/$defs/runtimeTopology"
         },
         "tracker": {
           "$ref": "#/$defs/trackerConfig"

@@ -211,6 +211,17 @@ export const LocalProjectConfigSchema = z
     runtime: z.string().optional(),
     agent: z.string().optional(),
     workspace: z.string().optional(),
+    runtimeTopology: z
+      .object({
+        services: z.record(
+          z.object({
+            ownerRepo: z.string().optional(),
+            dependsOn: z.array(z.string()).optional(),
+          }),
+        ),
+        profiles: z.record(z.array(z.string())).optional(),
+      })
+      .optional(),
     tracker: z.object({ plugin: z.string() }).passthrough().optional(),
     scm: z
       .object({

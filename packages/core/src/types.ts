@@ -1465,6 +1465,22 @@ export interface RoleAgentConfig {
   agentConfig?: AgentSpecificConfig;
 }
 
+export interface RuntimeServiceDefinition {
+  /** Repository that owns this service, e.g. "Sprig-Aerospace/ag-service". */
+  ownerRepo?: string;
+
+  /** Other service ids that this service depends on. */
+  dependsOn?: string[];
+}
+
+export interface RuntimeTopologyConfig {
+  /** Service catalog keyed by stable service id. */
+  services: Record<string, RuntimeServiceDefinition>;
+
+  /** Named runtime profiles mapped to the services they include. */
+  profiles?: Record<string, string[]>;
+}
+
 export interface ProjectConfig {
   /** Display name */
   name: string;
@@ -1497,6 +1513,9 @@ export interface ProjectConfig {
 
   /** Environment variables forwarded into worker session runtimes (AO_* internals always win) */
   env?: Record<string, string>;
+
+  /** Optional runtime service topology for this project/environment. */
+  runtimeTopology?: RuntimeTopologyConfig;
 
   /** Issue tracker configuration */
   tracker?: TrackerConfig;
