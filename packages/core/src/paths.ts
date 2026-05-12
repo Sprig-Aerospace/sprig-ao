@@ -291,6 +291,16 @@ export function getRegisteredPath(): string {
   return join(getPortfolioDir(), "registered.json");
 }
 
+/** Get the work packages directory (~/.agent-orchestrator/work-packages/) */
+export function getWorkPackagesDir(): string {
+  return join(getAoBaseDir(), "work-packages");
+}
+
+/** Get the work package metadata file path */
+export function getWorkPackagePath(workPackageId: string): string {
+  return join(getWorkPackagesDir(), `${workPackageId}.json`);
+}
+
 /**
  * @deprecated No longer needed — storageKey and .origin collision detection are removed.
  * Validate and store the .origin file for a project.
