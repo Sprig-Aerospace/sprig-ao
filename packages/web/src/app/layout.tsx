@@ -20,13 +20,13 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: {
       template: `%s | ${projectName}`,
-      default: `ao | ${projectName}`,
+      default: `Sprig AO | ${projectName}`,
     },
     description: "Dashboard for managing parallel AI coding agents",
     appleWebApp: {
       capable: true,
       statusBarStyle: "black-translucent",
-      title: `ao | ${projectName}`,
+      title: `Sprig AO | ${projectName}`,
     },
   };
 }

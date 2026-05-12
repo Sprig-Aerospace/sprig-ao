@@ -14,7 +14,7 @@ export async function generateMetadata(props: {
   const searchParams = await props.searchParams;
   const projectFilter = resolveDashboardProjectFilter(searchParams.project);
   const projectName = getDashboardProjectName(projectFilter);
-  return { title: { absolute: `ao | ${projectName}` } };
+  return { title: { absolute: `Sprig AO | ${projectName}` } };
 }
 
 export default async function Home(props: { searchParams: Promise<{ project?: string }> }) {

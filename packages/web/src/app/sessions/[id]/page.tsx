@@ -246,7 +246,7 @@ function SessionPageShell({
           )}
         </button>
         <div className="dashboard-app-header__brand">
-          <span>Agent Orchestrator</span>
+          <span>Sprig AO</span>
         </div>
         <div className="dashboard-app-header__spacer" />
       </header>

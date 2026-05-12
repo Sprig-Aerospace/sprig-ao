@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/project-name", () => ({
-  getProjectName: () => "Agent Orchestrator",
+  getProjectName: () => "Demo Project",
 }));
 
 describe("app layout metadata", () => {
@@ -19,13 +19,13 @@ describe("app layout metadata", () => {
 
     await expect(generateMetadata()).resolves.toMatchObject({
       title: {
-        template: "%s | Agent Orchestrator",
-        default: "ao | Agent Orchestrator",
+        template: "%s | Demo Project",
+        default: "Sprig AO | Demo Project",
       },
       appleWebApp: {
         capable: true,
         statusBarStyle: "black-translucent",
-        title: "ao | Agent Orchestrator",
+        title: "Sprig AO | Demo Project",
       },
     });
   });

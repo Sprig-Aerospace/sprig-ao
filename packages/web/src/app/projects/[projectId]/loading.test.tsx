@@ -6,7 +6,7 @@ describe("ProjectRouteLoading", () => {
   it("renders the project shell chrome during route loading", () => {
     render(<ProjectRouteLoading />);
 
-    expect(screen.getByText("Agent Orchestrator")).toBeInTheDocument();
+    expect(screen.getByText("Sprig AO")).toBeInTheDocument();
     expect(screen.getByText("Loading project…")).toBeInTheDocument();
     expect(screen.getByText("Projects")).toBeInTheDocument();
     expect(screen.getByLabelText("Loading project dashboard")).toBeInTheDocument();

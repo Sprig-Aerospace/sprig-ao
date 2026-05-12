@@ -107,7 +107,7 @@ export function SessionDetailHeader({
   const headerProjectLabel =
     projects.find((project) => project.id === session.projectId)?.name ?? session.projectId;
   const showHeaderProjectLabel =
-    headerProjectLabel.trim().toLowerCase() !== "agent orchestrator";
+    headerProjectLabel.trim().toLowerCase() !== "sprig ao";
 
   return (
     <header className="dashboard-app-header">
@@ -147,7 +147,7 @@ export function SessionDetailHeader({
         </button>
       ) : null}
       <div className="dashboard-app-header__brand dashboard-app-header__brand--hide-mobile">
-        <span>Agent Orchestrator</span>
+        <span>Sprig AO</span>
       </div>
       {showHeaderProjectLabel && (
         <span className="dashboard-app-header__sep topbar-desktop-only" aria-hidden="true" />
