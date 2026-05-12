@@ -205,6 +205,24 @@ For multi-step tasks, state a brief plan:
 
 Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
 
+## Orchestrator Workflow
+
+This repo ships an in-tree orchestrator convention under `.claude/` and `.orchestrator/`. It enforces an Architect/Code/Review split so that Claude Code plans, Codex executes, and multi-model review gates merges. Use it for any non-trivial change.
+
+- **`/orchestrate <plan-or-task>`** — drives a multi-slice task. Architect plans, dispatches Codex via `codex-handoff` per slice, verifies, commits. Per-task state under `.orchestrator/work/<slug>/` (tracked in git so other devs can see in-flight runs).
+- **`/review [base-branch]`** — multi-model POV review (Claude reviewer / Codex CLI / MiMo via OpenRouter / Gemini CLI) against `.orchestrator/review-rubric.md`, then synthesis to `.orchestrator/review-synthesis.md`.
+- **`/harvest <slice-id>`** — fold durable knowledge from a completed slice into CLAUDE.md / rubric and clean ephemeral scratch.
+
+Layers:
+
+1. **Convention** — `.orchestrator/templates/`, `.orchestrator/review-rubric.md`, `.orchestrator/work/`
+2. **Roles** — `.claude/agents/{architect,reviewer,synthesizer,debug,codex-handoff}.md`
+3. **Enforcement** — `.claude/hooks/{agent-path-guard,tdd-guard-packages}.sh` block writes to `packages/*/src/**` by non-Code subagents; `.claude/settings.json` wires them into `PreToolUse`
+
+External dependency: `tdd-guard` (install with `npm i -g tdd-guard`). The hook is a no-op if not installed (it does not fail closed); install it to get test-first enforcement on `packages/*/src/**`.
+
+Per-developer state stays local: `.claude/settings.local.json` and `.claude/tdd-guard/data/` are gitignored.
+
 ## CLI Behavior (ao start / ao stop)
 
 ### ao start

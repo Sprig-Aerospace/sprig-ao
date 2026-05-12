@@ -6,6 +6,9 @@ dist/
 *.tsbuildinfo
 coverage/
 *.patch
+# Orchestrator diff snapshots are part of the audit trail — track them
+!.orchestrator/**/*.patch
+!.orchestrator/diff.patch
 *-context.md
 packages/web/screenshots/
 .playwright-cli/
@@ -54,14 +57,20 @@ id_ed25519
 *.ppk
 
 # Development symlinks (created per-worktree, not committed)
-.claude
 packages/web/agent-orchestrator.yaml
 
 # Local agent orchestrator config (may contain secrets)
 agent-orchestrator.yaml
 
 # Agent configuration and activity logs
-.claude/
+# .claude/ contents are ignored EXCEPT for the orchestrator scaffolding
+# (agents, commands, hooks, settings.json). Per-developer state
+# (settings.local.json, tdd-guard runtime data, etc.) stays local.
+.claude/*
+!.claude/agents/
+!.claude/commands/
+!.claude/hooks/
+!.claude/settings.json
 .opencode/
 .ao/
 
