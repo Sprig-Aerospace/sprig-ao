@@ -261,6 +261,18 @@ const ProjectConfigSchema = z.object({
   reactions: z.record(ReactionConfigSchema.partial()).optional(),
   agentRules: z.string().optional(),
   agentRulesFile: z.string().optional(),
+  workspaceMetadata: z
+    .object({
+      repoOwnership: z
+        .array(
+          z.object({
+            note: z.string(),
+            applyWhen: z.array(z.string()).optional(),
+          }),
+        )
+        .optional(),
+    })
+    .optional(),
   orchestratorRules: z.string().optional(),
   orchestratorSessionStrategy: z
     .enum(["reuse", "delete", "ignore", "delete-new", "ignore-new", "kill-previous"])
