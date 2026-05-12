@@ -41,6 +41,8 @@ export {
   listMetadata,
 } from "./metadata.js";
 export { createInitialCanonicalLifecycle, deriveLegacyStatus } from "./lifecycle-state.js";
+export { buildBundleEvidenceSummary, buildSessionEvidenceSummary } from "./evidence-summary.js";
+export type { BundleEvidenceSummaryRepo, EvidenceValidationStatus, SessionEvidenceSummaryInput, SummaryArtifact, SummaryValidationResult } from "./evidence-summary.js";
 export { sessionFromMetadata } from "./utils/session-from-metadata.js";
 
 // Lifecycle transitions — centralized transition boundary (#137)

@@ -17,6 +17,9 @@ import {
   type ProjectConfig,
   type OrchestratorConfig,
   type PluginRegistry,
+  buildSessionEvidenceSummary,
+  type SummaryArtifact,
+  type SummaryValidationResult,
 } from "@aoagents/ao-core";
 import {
   type DashboardSession,
@@ -32,6 +35,68 @@ import { matchesSessionPrefix } from "./session-utils";
 const issueTitleCache = new TTLCache<string>(300_000);
 /** Cache failed issue-title lookups to avoid repeated tracker API calls. */
 const issueTitleMissCache = new TTLCache<boolean>(120_000);
+
+const SUMMARY_ARTIFACTS_METADATA_KEY = "summaryArtifacts";
+const SUMMARY_VALIDATIONS_METADATA_KEY = "summaryValidations";
+
+function parseSummaryJson(value: string | undefined): unknown {
+  if (!value) return null;
+  try {
+    return JSON.parse(value) as unknown;
+  } catch {
+    return null;
+  }
+}
+
+function parseSummaryArtifacts(metadata: Record<string, string>): SummaryArtifact[] {
+  const parsed = parseSummaryJson(metadata[SUMMARY_ARTIFACTS_METADATA_KEY]);
+  if (!Array.isArray(parsed)) return [];
+
+  return parsed.flatMap((entry): SummaryArtifact[] => {
+    if (typeof entry === "string") {
+      const label = entry.trim();
+      return label ? [{ label }] : [];
+    }
+    if (typeof entry !== "object" || entry === null || Array.isArray(entry)) return [];
+    const label = typeof entry["label"] === "string" ? entry["label"].trim() : "";
+    if (!label) return [];
+    return [{
+      label,
+      repo: typeof entry["repo"] === "string" ? entry["repo"] : undefined,
+      kind: typeof entry["kind"] === "string" ? entry["kind"] : undefined,
+    }];
+  });
+}
+
+function normalizeValidationStatus(value: unknown): SummaryValidationResult["status"] | null {
+  return value === "passed" || value === "failed" || value === "running" || value === "unknown"
+    ? value
+    : null;
+}
+
+function parseSummaryValidations(metadata: Record<string, string>): SummaryValidationResult[] {
+  const parsed = parseSummaryJson(metadata[SUMMARY_VALIDATIONS_METADATA_KEY]);
+  if (!Array.isArray(parsed)) return [];
+
+  return parsed.flatMap((entry): SummaryValidationResult[] => {
+    if (typeof entry !== "object" || entry === null || Array.isArray(entry)) return [];
+    const status = normalizeValidationStatus(entry["status"]);
+    if (!status) return [];
+    return [{
+      status,
+      label: typeof entry["label"] === "string" ? entry["label"] : undefined,
+      repo: typeof entry["repo"] === "string" ? entry["repo"] : undefined,
+    }];
+  });
+}
+
+function composeSessionSummary(session: Session): string | null {
+  return buildSessionEvidenceSummary({
+    summary: session.agentInfo?.summary ?? session.metadata["summary"] ?? null,
+    artifacts: parseSummaryArtifacts(session.metadata),
+    validations: parseSummaryValidations(session.metadata),
+  });
+}
 
 function isAbsoluteUrl(value: string): boolean {
   try {
@@ -159,7 +224,7 @@ export function refreshDashboardSessionDerivedFields(session: DashboardSession):
 /** Convert a core Session to a DashboardSession (without PR/issue enrichment). */
 export function sessionToDashboard(session: Session): DashboardSession {
   const agentSummary = session.agentInfo?.summary;
-  const summary = agentSummary ?? session.metadata["summary"] ?? null;
+  const summary = composeSessionSummary(session);
 
   return refreshDashboardSessionDerivedFields({
     id: session.id,
