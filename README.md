@@ -218,6 +218,7 @@ Running one AI agent in a terminal is easy. Running 30 across different issues, 
 | ---------------------------------------- | ------------------------------------------------------------ |
 | [Setup Guide](SETUP.md)                  | Detailed installation, configuration, and troubleshooting    |
 | [CLI Reference](docs/CLI.md)             | All `ao` commands (mostly used by the orchestrator agent)    |
+| [Workspace Config](docs/config/README.md) | Cross-repo workspace manifests and shared config artifacts   |
 | [Examples](examples/)                    | Config templates (GitHub, Linear, multi-project, auto-merge) |
 | [Development Guide](docs/DEVELOPMENT.md) | Architecture, conventions, plugin pattern                    |
 | [Contributing](CONTRIBUTING.md)          | How to contribute, build plugins, PR process                 |

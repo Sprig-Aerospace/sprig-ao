@@ -1,0 +1,152 @@
+# Initial Sprig workspace manifest
+# Scope: Milestone 1 workspace awareness
+# Dependency edges below describe workspace coordination and integration
+# relationships, not guaranteed build-time/package-manager imports.
+
+version: 1
+
+workspace:
+  id: sprig
+  name: Sprig workspace
+  status: draft
+  notes:
+    - Initial assumption-driven manifest for cross-repo awareness.
+    - Refine dependency edges and ownership notes as repository interfaces stabilize.
+
+runtimeProfiles:
+  ao-control-plane:
+    description: Dashboard, orchestrator, and worker-management profile for Sprig AO.
+  service-dev:
+    description: Service and API development profile for agent-facing backend changes.
+  gcs-dev:
+    description: Ground-control-station profile for operator UX, telemetry, and mission control flows.
+  sim-core:
+    description: Shared Linux simulation profile for simulator services, assets, and integration support.
+  px4-xplane-bridge:
+    description: PX4-to-X-Plane bridge profile for adapter validation and simulator IO testing.
+  sitl-integration:
+    description: End-to-end SITL profile for flight-stack rehearsal across multiple Sprig repos.
+
+repositories:
+  sprig-ag-service:
+    role: Agent-facing service and automation API surface.
+    ownershipNotes:
+      - Treat as the backend contract repo for automation workflows and service integrations.
+      - Review interface changes with sprig-gcs and sprig-ao because operator and automation flows meet here.
+    dependencies:
+      - repo: sprig-gcs
+        kind: operational
+        notes: Shares mission workflow and operator-facing data contracts.
+      - repo: sprig-sim-stack
+        kind: integration-test
+        notes: Uses simulator-backed scenarios to validate service behavior before field or hardware-linked runs.
+      - repo: sprig-ao
+        kind: tooling
+        notes: AO automates issue routing, worktree management, and agent execution against this repo.
+    runtimeProfiles:
+      - service-dev
+      - sitl-integration
+
+  sprig-gcs:
+    role: Ground control station and operator-facing mission control surface.
+    ownershipNotes:
+      - Treat as the operator-tools repo with strong coupling to telemetry, mission planning, and workflow UX.
+      - Keep workflow and telemetry contracts aligned with sprig-ag-service and simulator outputs.
+    dependencies:
+      - repo: sprig-ag-service
+        kind: operational
+        notes: Depends on shared mission workflow and backend service contracts.
+      - repo: sprig-sim-stack
+        kind: simulation
+        notes: Needs simulator-fed telemetry and scenario data for operator validation.
+      - repo: sprig-px4xplane
+        kind: simulation
+        notes: Consumes bridge output when validating X-Plane-connected control flows.
+    runtimeProfiles:
+      - gcs-dev
+      - sitl-integration
+
+  sprig-sim-stack:
+    role: Shared simulation stack for multi-repo system rehearsals and environment services.
+    ownershipNotes:
+      - Treat as the canonical simulation integration repo that other Sprig repos plug into for rehearsals.
+      - Coordinate environment or scenario changes with sprig-sitl-workspace and sprig-px4xplane maintainers.
+    dependencies:
+      - repo: sprig-px4xplane
+        kind: adapter
+        notes: Uses the PX4/X-Plane bridge for simulator and autopilot interoperability.
+      - repo: sprig-sitl-workspace
+        kind: integration
+        notes: Relies on the SITL workspace for repeatable end-to-end launch and validation flows.
+      - repo: sprig-gcs
+        kind: consumer
+        notes: Feeds operator workflows and telemetry views during simulation rehearsals.
+    runtimeProfiles:
+      - sim-core
+      - sitl-integration
+
+  sprig-px4xplane:
+    role: PX4 and X-Plane bridge, adapter, and integration harness.
+    ownershipNotes:
+      - Treat as the flight-simulator bridge repo with the tightest coupling to simulator IO contracts.
+      - Review protocol or adapter changes with sprig-sim-stack and sprig-sitl-workspace together.
+    dependencies:
+      - repo: sprig-sim-stack
+        kind: host-environment
+        notes: Runs inside or alongside the shared simulation environment.
+      - repo: sprig-sitl-workspace
+        kind: integration
+        notes: Participates in end-to-end SITL validation and launch workflows.
+      - repo: sprig-gcs
+        kind: consumer
+        notes: Produces bridge data consumed during operator-control validation.
+    runtimeProfiles:
+      - px4-xplane-bridge
+      - sitl-integration
+
+  sprig-sitl-workspace:
+    role: SITL-focused integration workspace for end-to-end flight-stack rehearsal.
+    ownershipNotes:
+      - Treat as the glue repo for reproducible local and CI simulation workflows.
+      - Any bootstrap, fixture, or environment changes should be reviewed with sprig-sim-stack and sprig-px4xplane maintainers.
+    dependencies:
+      - repo: sprig-sim-stack
+        kind: foundational
+        notes: Provides the shared simulator services and environment definitions.
+      - repo: sprig-px4xplane
+        kind: bridge
+        notes: Supplies autopilot-to-simulator integration inside the rehearsal workspace.
+      - repo: sprig-ag-service
+        kind: end-to-end
+        notes: Supports service-level workflow validation against simulated missions.
+      - repo: sprig-gcs
+        kind: end-to-end
+        notes: Supports operator workflow validation against simulated missions.
+    runtimeProfiles:
+      - sim-core
+      - sitl-integration
+
+  sprig-ao:
+    role: Cross-repo orchestration, agent execution, and workflow automation control plane.
+    ownershipNotes:
+      - Treat as the workspace automation repo that coordinates planning, implementation, CI follow-up, and review routing.
+      - Keep repo metadata, branch conventions, and dependency notes aligned with the rest of the workspace manifest.
+    dependencies:
+      - repo: sprig-ag-service
+        kind: automation-target
+        notes: AO manages issue execution and PR workflows for this repo.
+      - repo: sprig-gcs
+        kind: automation-target
+        notes: AO manages issue execution and PR workflows for this repo.
+      - repo: sprig-sim-stack
+        kind: automation-target
+        notes: AO manages issue execution and PR workflows for this repo.
+      - repo: sprig-px4xplane
+        kind: automation-target
+        notes: AO manages issue execution and PR workflows for this repo.
+      - repo: sprig-sitl-workspace
+        kind: automation-target
+        notes: AO manages issue execution and PR workflows for this repo.
+    runtimeProfiles:
+      - ao-control-plane
+      - sitl-integration
