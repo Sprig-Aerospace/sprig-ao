@@ -317,7 +317,7 @@ If issue validation fails, nothing is created — fail before allocating resourc
 Worker prompts are built in three persistent layers (`packages/core/src/prompt-builder.ts`):
 
 1. **Base agent guidance** — standard instructions for all sessions (git workflow, PR conventions, lifecycle hooks)
-2. **Config context** — project-specific info (repo, branch, tracker, issue details, automated reactions)
+2. **Config context** — project-specific info (repo, branch, tracker, issue details, automated reactions, scoped workspace guardrails)
 3. **Project rules** — content from `agentRules` / `agentRulesFile`
 
 The explicit user request is returned separately as `taskPrompt`. This lets session manager persist stable system instructions to disk while still sending only task-specific text to agents that need post-launch prompt delivery.

@@ -1526,6 +1526,9 @@ export interface ProjectConfig {
   /** Path to a file containing agent rules (relative to project path) */
   agentRulesFile?: string;
 
+  /** Workspace metadata used to scope worker context such as repo ownership guardrails. */
+  workspaceMetadata?: WorkspaceMetadataConfig;
+
   /** Rules for the orchestrator agent (stored, reserved for future use) */
   orchestratorRules?: string;
 
@@ -1538,6 +1541,18 @@ export interface ProjectConfig {
     | "kill-previous";
 
   opencodeIssueSessionStrategy?: "reuse" | "delete" | "ignore";
+}
+
+export interface WorkspaceMetadataConfig {
+  /** Concise repo/task guardrails surfaced to worker prompts. */
+  repoOwnership?: RepoOwnershipGuardrail[];
+}
+
+export interface RepoOwnershipGuardrail {
+  /** Short instruction explaining ownership or boundary truth for this repo/task. */
+  note: string;
+  /** Optional case-insensitive substrings that must match the active task context. */
+  applyWhen?: string[];
 }
 
 export interface TrackerConfig {

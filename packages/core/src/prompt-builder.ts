@@ -12,7 +12,7 @@
 
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import type { ProjectConfig, SessionId } from "./types.js";
+import type { ProjectConfig, RepoOwnershipGuardrail, SessionId } from "./types.js";
 
 // =============================================================================
 // LAYER 1: BASE AGENT PROMPT
@@ -137,6 +137,13 @@ function buildConfigLayer(config: PromptBuildConfig): string {
     lines.push(issueContext);
   }
 
+  const repoGuardrails = selectRepoOwnershipGuardrails(config);
+  if (repoGuardrails.length > 0) {
+    lines.push(`\n## Repo Guardrails`);
+    lines.push("Apply these ownership boundaries when working in this repository:");
+    lines.push(...repoGuardrails.map((guardrail) => `- ${guardrail.note}`));
+  }
+
   // Include reaction rules so the agent knows what to expect
   if (project.reactions) {
     const reactionHints: string[] = [];
@@ -153,6 +160,58 @@ function buildConfigLayer(config: PromptBuildConfig): string {
   }
 
   return lines.join("\n");
+}
+
+const MAX_REPO_OWNERSHIP_GUARDRAILS = 4;
+
+function selectRepoOwnershipGuardrails(config: PromptBuildConfig): RepoOwnershipGuardrail[] {
+  const repoOwnership = config.project.workspaceMetadata?.repoOwnership ?? [];
+  if (repoOwnership.length === 0) {
+    return [];
+  }
+
+  const taskContext = [
+    config.project.name,
+    config.project.repo,
+    config.project.path,
+    config.projectId,
+    config.issueId,
+    config.issueContext,
+    config.userPrompt,
+  ]
+    .filter((value): value is string => typeof value === "string" && value.trim().length > 0)
+    .join("\n")
+    .toLocaleLowerCase();
+
+  const scoped = repoOwnership.filter((guardrail) => matchesTaskContext(guardrail, taskContext));
+  const deduped: RepoOwnershipGuardrail[] = [];
+  const seenNotes = new Set<string>();
+
+  for (const guardrail of scoped) {
+    const note = guardrail.note.trim();
+    if (note.length === 0 || seenNotes.has(note)) {
+      continue;
+    }
+    seenNotes.add(note);
+    deduped.push({ ...guardrail, note });
+    if (deduped.length >= MAX_REPO_OWNERSHIP_GUARDRAILS) {
+      break;
+    }
+  }
+
+  return deduped;
+}
+
+function matchesTaskContext(guardrail: RepoOwnershipGuardrail, taskContext: string): boolean {
+  const patterns = guardrail.applyWhen
+    ?.map((pattern) => pattern.trim().toLocaleLowerCase())
+    .filter((pattern) => pattern.length > 0);
+
+  if (!patterns || patterns.length === 0) {
+    return true;
+  }
+
+  return patterns.some((pattern) => taskContext.includes(pattern));
 }
 
 // =============================================================================

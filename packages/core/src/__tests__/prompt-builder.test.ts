@@ -307,6 +307,72 @@ describe("buildPrompt", () => {
     expect(systemPrompt).toContain("ci-failed");
     expect(systemPrompt).not.toContain("approved-and-green");
   });
+
+  it("includes repo guardrails that always apply to the active repo", () => {
+    project.workspaceMetadata = {
+      repoOwnership: [
+        { note: "GCS is not command authority." },
+        { note: "Safety bridge owns PX4/MAVLink boundary truth." },
+      ],
+    };
+
+    const { systemPrompt } = buildPrompt({
+      project,
+      projectId: "test-app",
+      issueId: "INT-100",
+    });
+
+    expect(systemPrompt).toContain("## Repo Guardrails");
+    expect(systemPrompt).toContain("GCS is not command authority.");
+    expect(systemPrompt).toContain("Safety bridge owns PX4/MAVLink boundary truth.");
+  });
+
+  it("scopes repo guardrails to the active task context", () => {
+    project.workspaceMetadata = {
+      repoOwnership: [
+        {
+          note: "Integrated SITL belongs in sprig-sim-stack.",
+          applyWhen: ["sitl", "simulation"],
+        },
+        {
+          note: "Safety bridge owns PX4/MAVLink boundary truth.",
+          applyWhen: ["px4", "mavlink"],
+        },
+      ],
+    };
+
+    const { systemPrompt } = buildPrompt({
+      project,
+      projectId: "test-app",
+      issueId: "INT-100",
+      issueContext: "Investigate SITL startup behavior in the simulator.",
+    });
+
+    expect(systemPrompt).toContain("Integrated SITL belongs in sprig-sim-stack.");
+    expect(systemPrompt).not.toContain("Safety bridge owns PX4/MAVLink boundary truth.");
+  });
+
+  it("caps repo guardrails to avoid prompt bloat", () => {
+    project.workspaceMetadata = {
+      repoOwnership: [
+        { note: "Guardrail 1" },
+        { note: "Guardrail 2" },
+        { note: "Guardrail 3" },
+        { note: "Guardrail 4" },
+        { note: "Guardrail 5" },
+      ],
+    };
+
+    const { systemPrompt } = buildPrompt({
+      project,
+      projectId: "test-app",
+      issueId: "INT-100",
+    });
+
+    expect(systemPrompt).toContain("Guardrail 1");
+    expect(systemPrompt).toContain("Guardrail 4");
+    expect(systemPrompt).not.toContain("Guardrail 5");
+  });
 });
 
 describe("BASE_AGENT_PROMPT", () => {
