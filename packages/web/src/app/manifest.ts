@@ -6,7 +6,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: `Sprig AO | ${projectName}`,
     short_name: "Sprig AO",
-    description: "Sprig AO dashboard for managing parallel AI coding agents",
+    description: "Dashboard for managing parallel AI coding agents",
     start_url: "/",
     scope: "/",
     display: "standalone",

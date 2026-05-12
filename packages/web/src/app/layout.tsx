@@ -22,7 +22,7 @@ export async function generateMetadata(): Promise<Metadata> {
       template: `%s | ${projectName}`,
       default: `Sprig AO | ${projectName}`,
     },
-    description: "Sprig AO dashboard for managing parallel AI coding agents",
+    description: "Dashboard for managing parallel AI coding agents",
     appleWebApp: {
       capable: true,
       statusBarStyle: "black-translucent",
