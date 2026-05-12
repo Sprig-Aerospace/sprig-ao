@@ -25,6 +25,29 @@ the source of truth. Defer to them.
   draft a slice plan first, write it to `.orchestrator/work/<slug>/plan.md`,
   then drive it.
 
+## Token-budget directive (always)
+
+The main `/orchestrate` session is Opus. To minimise Opus token usage,
+**every invocation must delegate planning to the architect subagent**
+(`.claude/agents/architect.md`, runs on Sonnet) regardless of how the task
+is phrased. Do this on the very first turn, before any other tool call
+except a read-only `git status --short` to verify a clean tree:
+
+```
+Agent(subagent_type="architect", description="Plan: <task>",
+      prompt="<verbatim $ARGUMENTS plus a note that the plan must follow
+               .orchestrator/templates/* and mark each slice's type>")
+```
+
+Wait for the architect's plan, then resume Step 1 below using that plan as
+input. Do not re-plan, re-draft, or re-clarify in the main session — your
+job from that point is dispatch + verification, not planning.
+
+Exception: if `$ARGUMENTS` already points at an existing
+`.orchestrator/plans/NN-*.md` AND the file already contains slice-type
+headers, you may skip the architect dispatch and consume the file
+directly.
+
 ## Workflow
 
 ### Step 1 — resolve task & state

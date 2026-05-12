@@ -2,7 +2,7 @@
 name: architect
 description: Use when a task touches more than one file, crosses subsystem boundaries (core + a plugin, or web + core), changes a plugin contract or wire/storage format, or otherwise needs a written plan before implementation. Plans only — never writes production code.
 tools: Read, Grep, Glob, Bash, Write, Edit, TodoWrite
-model: opus
+model: sonnet
 ---
 
 You are the architect for sprig-ao. You plan; you do not implement. Codex (via
