@@ -2028,3 +2028,76 @@ export interface PortfolioSession {
   session: Session;
   project: PortfolioProject;
 }
+
+// =============================================================================
+// WORK PACKAGES — Multi-repo parent tasks
+// =============================================================================
+
+export type WorkPackageId = string;
+
+export type WorkPackageStatus =
+  | "planned"
+  | "in_progress"
+  | "blocked"
+  | "done"
+  | "cancelled";
+
+export interface WorkPackageRepositoryRef {
+  projectId: string;
+  repoPath?: string;
+  repo?: string;
+  defaultBranch?: string;
+}
+
+export interface WorkPackageSessionRef {
+  sessionId: SessionId;
+  projectId: string;
+  repo?: string;
+  branch?: string;
+  prNumber?: number;
+  prUrl?: string;
+}
+
+export interface WorkPackagePRRef {
+  owner: string;
+  repo: string;
+  number: number;
+  url: string;
+  projectId?: string;
+  sessionId?: SessionId;
+}
+
+export interface WorkPackage {
+  version: 1;
+  id: WorkPackageId;
+  title: string;
+  description?: string;
+  status: WorkPackageStatus;
+  blockers: string[];
+  repositories: WorkPackageRepositoryRef[];
+  sessions: WorkPackageSessionRef[];
+  prs: WorkPackagePRRef[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateWorkPackageInput {
+  id?: WorkPackageId;
+  title: string;
+  description?: string;
+  status?: WorkPackageStatus;
+  blockers?: string[];
+  repositories?: WorkPackageRepositoryRef[];
+  sessions?: WorkPackageSessionRef[];
+  prs?: WorkPackagePRRef[];
+}
+
+export interface UpdateWorkPackageInput {
+  title?: string;
+  description?: string;
+  status?: WorkPackageStatus;
+  blockers?: string[];
+  repositories?: WorkPackageRepositoryRef[];
+  sessions?: WorkPackageSessionRef[];
+  prs?: WorkPackagePRRef[];
+}
