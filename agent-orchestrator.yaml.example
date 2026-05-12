@@ -116,6 +116,15 @@ projects:
     # Path to a rules file (relative to project path)
     # agentRulesFile: .agent-rules.md
 
+    # Workspace metadata can inject concise worker guardrails for repo boundaries.
+    # workspaceMetadata:
+    #   repoOwnership:
+    #     - note: Integrated SITL belongs in sprig-sim-stack.
+    #       applyWhen: [sitl, simulator]
+    #     - note: GCS is not command authority.
+    #     - note: Safety bridge owns PX4/MAVLink boundary truth.
+    #       applyWhen: [px4, mavlink]
+
     # Rules for the orchestrator agent (reserved for future use)
     # orchestratorRules: |
     #   Prefer to batch-spawn related issues together.
