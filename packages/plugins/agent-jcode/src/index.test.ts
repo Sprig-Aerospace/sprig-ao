@@ -15,8 +15,7 @@ const {
   mockBuildAgentPath,
   mockIsWindows,
   mockReadFileSync,
-  mockStat,
-  mockReaddir,
+  mockRealpath,
 } = vi.hoisted(() => ({
   mockExecFileAsync: vi.fn(),
   mockExecFileSync: vi.fn(),
@@ -26,8 +25,7 @@ const {
   mockBuildAgentPath: vi.fn((p: string | undefined) => `/home/test/.ao/bin:${p ?? ""}`),
   mockIsWindows: vi.fn(() => false),
   mockReadFileSync: vi.fn(() => "system instructions"),
-  mockStat: vi.fn(),
-  mockReaddir: vi.fn(),
+  mockRealpath: vi.fn(),
 }));
 
 vi.mock("node:child_process", () => {
@@ -44,7 +42,7 @@ vi.mock("node:fs", async (importOriginal) => {
 
 vi.mock("node:fs/promises", async (importOriginal) => {
   const actual = (await importOriginal()) as Record<string, unknown>;
-  return { ...actual, stat: mockStat, readdir: mockReaddir };
+  return { ...actual, realpath: mockRealpath };
 });
 
 vi.mock("@aoagents/ao-core", async (importOriginal) => {
@@ -126,8 +124,7 @@ beforeEach(() => {
   mockReadLastActivityEntry.mockResolvedValue(null);
   mockBuildAgentPath.mockImplementation((p: string | undefined) => `/home/test/.ao/bin:${p ?? ""}`);
   mockIsWindows.mockReturnValue(false);
-  mockStat.mockRejectedValue(new Error("ENOENT"));
-  mockReaddir.mockRejectedValue(new Error("ENOENT"));
+  mockRealpath.mockRejectedValue(new Error("ENOENT"));
 });
 
 describe("manifest and exports", () => {
@@ -362,6 +359,36 @@ describe("recordActivity and hooks", () => {
 describe("session info and restore", () => {
   it("returns null when jcode exposes nothing", async () => {
     expect(await create().getSessionInfo(makeSession())).toBeNull();
+  });
+
+  it("matches debug sessions using canonical real paths", async () => {
+    mockRealpath.mockImplementation(async (pathValue: string) => {
+      if (pathValue === "/tmp/workspace/proj") return "/private/tmp/workspace/proj";
+      return pathValue;
+    });
+    mockExecFileAsync.mockResolvedValueOnce({
+      stdout: JSON.stringify({
+        sessions: [
+          {
+            id: "abc",
+            cwd: "/private/tmp/workspace/proj",
+            title: "Canonical path session",
+            updated_at: new Date().toISOString(),
+          },
+        ],
+      }),
+      stderr: "",
+    });
+
+    const info = await create().getSessionInfo(
+      makeSession({ workspacePath: "/tmp/workspace/proj" }),
+    );
+
+    expect(info).toMatchObject({
+      agentSessionId: "abc",
+      summary: "Canonical path session",
+      summaryIsFallback: true,
+    });
   });
 
   it("extracts session id and summary from debug sessions when available", async () => {

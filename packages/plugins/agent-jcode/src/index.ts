@@ -23,9 +23,9 @@ import {
 } from "@aoagents/ao-core";
 import { execFile, execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
-import { readdir, stat } from "node:fs/promises";
-import { homedir, tmpdir } from "node:os";
-import { basename, join } from "node:path";
+import { realpath } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
 import { promisify } from "node:util";
 
 const execFileAsync = promisify(execFile);
@@ -108,8 +108,16 @@ function createLaunchCommand(config: AgentLaunchConfig): string {
   return formatLaunchCommand(`${ensureServer}; ${maybeRun}exec ${connect} || exec ${repl}`);
 }
 
-function toComparablePath(value: string): string {
-  return value.replace(/\\/g, "/").replace(/^([A-Z]):/, (match) => match.toLowerCase());
+async function toComparablePath(value: string): Promise<string> {
+  const resolved = resolve(value);
+  let canonical = resolved;
+  try {
+    canonical = await realpath(resolved);
+  } catch {
+    // Fall back to the absolute path when the agent reports a path that no
+    // longer exists or is not accessible to AO.
+  }
+  return canonical.replace(/\\/g, "/").replace(/^([A-Z]):/, (match) => match.toLowerCase());
 }
 
 function getString(record: Record<string, unknown>, keys: string[]): string | null {
@@ -150,7 +158,10 @@ function collectSessionRecords(value: unknown): Record<string, unknown>[] {
   return [record];
 }
 
-function parseJcodeDebugSessions(stdout: string, workspacePath: string): JcodeDebugSession | null {
+async function parseJcodeDebugSessions(
+  stdout: string,
+  workspacePath: string,
+): Promise<JcodeDebugSession | null> {
   let parsed: unknown;
   try {
     parsed = JSON.parse(stdout);
@@ -158,11 +169,11 @@ function parseJcodeDebugSessions(stdout: string, workspacePath: string): JcodeDe
     return null;
   }
 
-  const wanted = toComparablePath(workspacePath);
+  const wanted = await toComparablePath(workspacePath);
   let best: JcodeDebugSession | null = null;
   for (const record of collectSessionRecords(parsed)) {
     const cwd = getString(record, ["cwd", "workdir", "workspace", "workspacePath", "path"]);
-    if (!cwd || toComparablePath(cwd) !== wanted) continue;
+    if (!cwd || (await toComparablePath(cwd)) !== wanted) continue;
 
     const updatedAt =
       parseDate(record["updated_at"]) ??
@@ -191,45 +202,10 @@ async function getDebugSession(workspacePath: string): Promise<JcodeDebugSession
       ["--no-update", "debug", "sessions", "-C", workspacePath],
       { timeout: 10_000, maxBuffer: 1024 * 1024 },
     );
-    return parseJcodeDebugSessions(stdout, workspacePath);
+    return await parseJcodeDebugSessions(stdout, workspacePath);
   } catch {
     return null;
   }
-}
-
-async function newestJcodeFileMtime(workspacePath: string): Promise<Date | null> {
-  const roots = [join(homedir(), ".jcode"), join(homedir(), ".local", "share", "jcode")];
-  const wantedLeaf = basename(workspacePath);
-  let newest: Date | null = null;
-
-  async function scan(dir: string, depth: number): Promise<void> {
-    if (depth > 4) return;
-    let entries: string[];
-    try {
-      entries = await readdir(dir);
-    } catch {
-      return;
-    }
-    for (const entry of entries) {
-      const fullPath = join(dir, entry);
-      let s: Awaited<ReturnType<typeof stat>>;
-      try {
-        s = await stat(fullPath);
-      } catch {
-        continue;
-      }
-      if (s.isDirectory()) {
-        await scan(fullPath, depth + 1);
-        continue;
-      }
-      if (!/\.(?:jsonl|json|log)$/.test(entry)) continue;
-      if (!fullPath.includes(wantedLeaf)) continue;
-      if (!newest || s.mtimeMs > newest.getTime()) newest = s.mtime;
-    }
-  }
-
-  for (const root of roots) await scan(root, 0);
-  return newest;
 }
 
 function classifyTimestamp(
@@ -320,9 +296,6 @@ function createJcodeAgent(): Agent {
       const debugSession = await getDebugSession(session.workspacePath);
       if (debugSession?.updatedAt)
         return classifyTimestamp(debugSession.updatedAt, activeWindowMs, threshold);
-
-      const nativeMtime = await newestJcodeFileMtime(session.workspacePath);
-      if (nativeMtime) return classifyTimestamp(nativeMtime, activeWindowMs, threshold);
 
       const fallback = getActivityFallbackState(activityResult, activeWindowMs, threshold);
       if (fallback) return fallback;
