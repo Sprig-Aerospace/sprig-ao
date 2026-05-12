@@ -236,6 +236,73 @@ const RoleAgentConfigSchema = z
   })
   .optional();
 
+const RuntimeServiceDefinitionSchema = z.object({
+  ownerRepo: z.string().optional(),
+  dependsOn: z.array(z.string()).optional(),
+});
+
+const RuntimeTopologySchema = z
+  .object({
+    services: z.record(z.string(), RuntimeServiceDefinitionSchema),
+    profiles: z.record(z.string(), z.array(z.string())).optional(),
+  })
+  .superRefine((value, ctx) => {
+    const serviceIds = new Set(Object.keys(value.services));
+
+    for (const [serviceId, service] of Object.entries(value.services)) {
+      for (const dependencyId of service.dependsOn ?? []) {
+        if (!serviceIds.has(dependencyId)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["services", serviceId, "dependsOn"],
+            message: `Runtime service "${serviceId}" depends on unknown service "${dependencyId}"`,
+          });
+        }
+      }
+    }
+
+    for (const [profileId, profileServiceIds] of Object.entries(value.profiles ?? {})) {
+      for (const serviceId of profileServiceIds) {
+        if (!serviceIds.has(serviceId)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["profiles", profileId],
+            message: `Runtime profile "${profileId}" references unknown service "${serviceId}"`,
+          });
+        }
+      }
+    }
+
+    const visited = new Set<string>();
+    const visiting = new Set<string>();
+
+    const visit = (serviceId: string, path: string[]): void => {
+      if (visited.has(serviceId)) return;
+      if (visiting.has(serviceId)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["services", serviceId, "dependsOn"],
+          message: `Runtime topology contains a dependency cycle: ${[...path, serviceId].join(" -> ")}`,
+        });
+        return;
+      }
+
+      const service = value.services[serviceId];
+      if (!service) return;
+
+      visiting.add(serviceId);
+      for (const dependencyId of service.dependsOn ?? []) {
+        visit(dependencyId, [...path, serviceId]);
+      }
+      visiting.delete(serviceId);
+      visited.add(serviceId);
+    };
+
+    for (const serviceId of serviceIds) {
+      visit(serviceId, []);
+    }
+  });
+
 const ProjectConfigSchema = z.object({
   name: z.string().optional(),
   repo: z.string().optional(),
@@ -251,6 +318,7 @@ const ProjectConfigSchema = z.object({
   agent: z.string().optional(),
   workspace: z.string().optional(),
   env: z.record(z.string(), z.string()).optional(),
+  runtimeTopology: RuntimeTopologySchema.optional(),
   tracker: TrackerConfigSchema.optional(),
   scm: SCMConfigSchema.optional(),
   symlinks: z.array(z.string()).optional(),

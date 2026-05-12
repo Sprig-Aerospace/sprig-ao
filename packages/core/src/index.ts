@@ -175,6 +175,8 @@ export {
 } from "./orchestrator-session-strategy.js";
 export { resolveSpawnTarget } from "./spawn-target.js";
 export type { SpawnTarget } from "./spawn-target.js";
+export { resolveRuntimeProfileServices, resolveRuntimeServices } from "./runtime-topology.js";
+export type { RuntimeTopologyService } from "./runtime-topology.js";
 
 // Activity log — JSONL activity tracking for agents without native JSONL
 export {

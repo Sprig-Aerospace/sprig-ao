@@ -74,6 +74,108 @@ describe("Config Validation - Numeric Fields", () => {
   });
 });
 
+describe("Config Validation - Runtime Topology", () => {
+  const baseProject = {
+    path: "/repos/sprig-runtime",
+    defaultBranch: "main",
+  };
+
+  it("accepts runtime topology services with owners, dependencies, and profiles", () => {
+    expect(() =>
+      validateConfig({
+        projects: {
+          sprig: {
+            ...baseProject,
+            runtimeTopology: {
+              services: {
+                gcs: { ownerRepo: "Sprig-Aerospace/gcs" },
+                "ag-service": {
+                  ownerRepo: "Sprig-Aerospace/ag-service",
+                  dependsOn: ["gcs"],
+                },
+                "px4-bridge": {
+                  ownerRepo: "Sprig-Aerospace/px4-bridge",
+                  dependsOn: ["ag-service"],
+                },
+                px4: {
+                  ownerRepo: "PX4/PX4-Autopilot",
+                  dependsOn: ["px4-bridge"],
+                },
+                "fault-injector": {
+                  ownerRepo: "Sprig-Aerospace/fault-injector",
+                  dependsOn: ["ag-service"],
+                },
+                relays: {
+                  ownerRepo: "Sprig-Aerospace/relays",
+                  dependsOn: ["ag-service"],
+                },
+              },
+              profiles: {
+                sim: ["px4", "fault-injector", "relays"],
+              },
+            },
+          },
+        },
+      }),
+    ).not.toThrow();
+  });
+
+  it("rejects dependencies that reference unknown services", () => {
+    expect(() =>
+      validateConfig({
+        projects: {
+          sprig: {
+            ...baseProject,
+            runtimeTopology: {
+              services: {
+                px4: { dependsOn: ["px4-bridge"] },
+              },
+            },
+          },
+        },
+      }),
+    ).toThrow(/depends on unknown service/);
+  });
+
+  it("rejects profiles that reference unknown services", () => {
+    expect(() =>
+      validateConfig({
+        projects: {
+          sprig: {
+            ...baseProject,
+            runtimeTopology: {
+              services: {
+                gcs: {},
+              },
+              profiles: {
+                sim: ["px4"],
+              },
+            },
+          },
+        },
+      }),
+    ).toThrow(/references unknown service/);
+  });
+
+  it("rejects cyclic service dependencies", () => {
+    expect(() =>
+      validateConfig({
+        projects: {
+          sprig: {
+            ...baseProject,
+            runtimeTopology: {
+              services: {
+                gcs: { dependsOn: ["ag-service"] },
+                "ag-service": { dependsOn: ["gcs"] },
+              },
+            },
+          },
+        },
+      }),
+    ).toThrow(/dependency cycle/);
+  });
+});
+
 describe("Config Validation - Session Prefix Uniqueness", () => {
   it("rejects duplicate explicit prefixes", () => {
     const config = {
