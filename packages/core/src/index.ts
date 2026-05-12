@@ -164,10 +164,7 @@ export {
   resetOpenCodeSessionListCache,
 } from "./opencode-shared.js";
 export type { OpenCodeSessionListEntry } from "./opencode-shared.js";
-export {
-  getWorkspaceAgentsMdPath,
-  writeWorkspaceOpenCodeAgentsMd,
-} from "./opencode-agents-md.js";
+export { getWorkspaceAgentsMdPath, writeWorkspaceOpenCodeAgentsMd } from "./opencode-agents-md.js";
 export { writeOpenCodeConfig } from "./opencode-config.js";
 export {
   getOrchestratorSessionId,
@@ -215,6 +212,12 @@ export {
 } from "./observability.js";
 export { execGhObserved, getGhTraceFilePath } from "./gh-trace.js";
 export { resolveNotifierTarget } from "./notifier-resolution.js";
+export { collectSprigArtifacts } from "./sprig-artifacts.js";
+export type {
+  SprigArtifactCollection,
+  SprigArtifactKind,
+  SprigArtifactRecord,
+} from "./sprig-artifacts.js";
 export type {
   ObservabilityLevel,
   ObservabilityMetricName,
