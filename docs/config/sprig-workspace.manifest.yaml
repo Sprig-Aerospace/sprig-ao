@@ -1,0 +1,209 @@
+version: 1
+lastReviewed: 2026-05-12
+workspace:
+  id: sprig
+  name: Sprig Workspace
+  milestone: Workspace awareness
+  description: >-
+    Initial cross-repo manifest for the Sprig flight, simulation, and agentic
+    orchestration stack.
+
+repositories:
+  - id: sprig-ag-service
+    url: https://github.com/Sprig-Aerospace/sprig-ag-service
+    defaultBranch: main
+    visibility: private
+    status: active
+    role: >-
+      Flight director runtime for the S1000 agricultural UAS, including the
+      Python mission runtime and retained Rust PX4 safety bridge.
+    ownership:
+      notes:
+        - Owns mission execution, readiness, guidance, spray coordination, and the GCS-facing UDP control/telemetry contract.
+        - Owns the MAVLink/PX4 safety boundary implemented in native/px4-safety-bridge.
+        - Should remain the system-of-record for CM5 flight runtime behavior, not the sim launcher.
+    runtimeProfiles:
+      - id: cm5-flight-runtime
+        environment: production
+        summary: CM5-hosted Python flight director plus retained Rust PX4 safety bridge.
+      - id: local-sitl-runtime
+        environment: development
+        summary: Local bridge and flight-director runtime wired to PX4/X-Plane style endpoints for simulation and integration work.
+    dependsOn:
+      - repository: sprig-gcs
+        relationship: operator-ui-contract
+        notes: Consumes plans, commands, and telemetry through the GCS protocol surface.
+      - repository: sprig-sim-stack
+        relationship: integrated-simulation
+        notes: Participates as a launched service inside the full-stack SITL/HITL environment.
+
+  - id: sprig-gcs
+    url: https://github.com/Sprig-Aerospace/sprig-gcs
+    defaultBranch: main
+    visibility: internal
+    status: active
+    role: >-
+      Unified Flutter ground control station for agricultural spray operations
+      across flight, planning, records, and operator settings workflows.
+    ownership:
+      notes:
+        - Owns the desktop GCS application, operator workflows, endpoint configuration, and app-level tests.
+        - Explicitly does not own integrated SITL orchestration; that boundary belongs to sprig-sim-stack.
+        - Should remain production-shaped and avoid sim-only transport shortcuts in runtime defaults.
+    runtimeProfiles:
+      - id: windows-desktop
+        environment: production
+        summary: Windows-hosted operator desktop application for live aircraft operations.
+      - id: sim-client
+        environment: development
+        summary: Desktop client pointed at simulation endpoints managed by sprig-sim-stack.
+    dependsOn:
+      - repository: sprig-ag-service
+        relationship: command-and-telemetry
+        notes: Exchanges mission plans, commands, and telemetry with the flight runtime.
+      - repository: sprig-sim-stack
+        relationship: simulation-launch
+        notes: Uses the sim stack for integrated local and test simulation workflows.
+
+  - id: sprig-sim-stack
+    url: https://github.com/Sprig-Aerospace/sprig-sim-stack
+    defaultBranch: main
+    visibility: internal
+    status: active
+    role: >-
+      Full-stack local SITL/HITL orchestration layer that launches and manages
+      the Sprig simulation environment across host-native and containerized
+      components.
+    ownership:
+      notes:
+        - Owns integrated simulation startup, shutdown, health checks, and operator-safe defaults.
+        - Owns the cross-repo simulation boundary for sprig-ag-service, sprig-gcs, fault injection, PX4 SITL, and X-Plane integration.
+        - Should stay the single orchestrator for multi-service simulation flows rather than pushing that logic into app repos.
+    runtimeProfiles:
+      - id: xplane-hitl-dev
+        environment: development
+        summary: Hot-reload oriented integrated stack for local simulation work.
+      - id: xplane-hitl-prod
+        environment: release-like
+        summary: Pinned-image integrated stack for reproducible validation runs.
+      - id: desktop-launcher
+        environment: operator-tooling
+        summary: Thin Tauri launcher that invokes the owned orchestration scripts.
+    dependsOn:
+      - repository: sprig-ag-service
+        relationship: launched-service
+        notes: Starts and wires the ag-service into the integrated simulation environment.
+      - repository: sprig-gcs
+        relationship: launched-client
+        notes: Includes the GCS as part of the supported full-stack workflow.
+      - repository: sprig-px4xplane
+        relationship: simulator-bridge
+        notes: Relies on the X-Plane plugin for the supported xplane-hitl simulation path.
+      - repository: sprig-sitl-workspace
+        relationship: workspace-bootstrap
+        notes: Planned workspace bootstrap repo for repeatable multi-repo developer setup.
+
+  - id: sprig-px4xplane
+    url: https://github.com/Sprig-Aerospace/sprig-px4xplane
+    defaultBranch: master
+    visibility: public
+    status: active
+    role: >-
+      Sprig-maintained PX4 ↔ X-Plane integration plugin used for X-Plane 12
+      HITL simulation.
+    ownership:
+      notes:
+        - Owns the maintained plugin fork, reconnect handling, Sprig build metadata, safe defaults, harness tooling, and packaging flow.
+        - Should stay focused on simulator bridging and packaging, not full-stack orchestration.
+        - Provides the X-Plane-side runtime dependency consumed by sprig-sim-stack.
+    runtimeProfiles:
+      - id: xplane-plugin
+        environment: simulation
+        summary: Installed X-Plane plugin runtime listening for PX4 integration traffic.
+      - id: local-harness
+        environment: development
+        summary: Local TCP lifecycle and verification harness for plugin development and validation.
+      - id: macos-packaging
+        environment: release
+        summary: Repeatable macOS packaging flow for distributing the Sprig-maintained plugin build.
+    dependsOn:
+      - repository: sprig-sim-stack
+        relationship: primary-consumer
+        notes: The sim stack is the main integrated consumer of this plugin inside Sprig workflows.
+
+  - id: sprig-sitl-workspace
+    url: null
+    defaultBranch: main
+    visibility: unknown
+    status: planned
+    role: >-
+      Planned multi-repo workspace bootstrap and layout definition for SITL
+      development across the Sprig stack.
+    ownership:
+      notes:
+        - Intended to own developer checkout topology, bootstrap conventions, and shared workspace glue across the simulation repos.
+        - Included now so AO and other tooling can model the expected workspace shape before the repository is provisioned.
+        - Should centralize workspace assembly concerns instead of hiding them in per-repo onboarding docs.
+    runtimeProfiles:
+      - id: workspace-bootstrap
+        environment: development
+        summary: Clone/sync/bootstrap flow for assembling the full SITL development workspace.
+      - id: full-stack-dev-shell
+        environment: development
+        summary: Shared developer shell/profile for working across sim-stack, ag-service, GCS, and plugin repos together.
+    dependsOn:
+      - repository: sprig-sim-stack
+        relationship: primary-workspace-target
+        notes: Expected to bootstrap the repos needed for integrated simulation development.
+      - repository: sprig-ag-service
+        relationship: included-repo
+        notes: Expected workspace member for flight-runtime development.
+      - repository: sprig-gcs
+        relationship: included-repo
+        notes: Expected workspace member for operator-client development.
+      - repository: sprig-px4xplane
+        relationship: included-repo
+        notes: Expected workspace member for X-Plane plugin development.
+      - repository: sprig-ao
+        relationship: included-repo
+        notes: Expected workspace member for agentic automation across the stack.
+
+  - id: sprig-ao
+    url: https://github.com/Sprig-Aerospace/sprig-ao
+    defaultBranch: main
+    visibility: public
+    status: active
+    role: >-
+      Agentic orchestration layer for coordinating parallel coding agents across
+      the Sprig repositories.
+    ownership:
+      notes:
+        - Owns task planning, agent spawning, worktree isolation, PR automation, CI follow-up, and review follow-up loops.
+        - Should own cross-repo coding workflow automation rather than repo-specific flight or simulation runtime logic.
+        - Serves as the workspace-awareness control plane for future multi-repo automation.
+    runtimeProfiles:
+      - id: local-orchestrator
+        environment: development
+        summary: Local AO dashboard and CLI used to supervise agent work across the Sprig repos.
+      - id: ci-remediation
+        environment: automation
+        summary: Automated follow-up loop for failing CI across active Sprig repositories.
+      - id: review-followup
+        environment: automation
+        summary: Automated handling of PR review comments and requested changes.
+    dependsOn:
+      - repository: sprig-sitl-workspace
+        relationship: workspace-model
+        notes: Future workspace manifest/bootstrap repo can provide AO with a canonical multi-repo layout.
+      - repository: sprig-sim-stack
+        relationship: automation-target
+        notes: High-value automation target for simulation-stack changes and multi-repo validation.
+      - repository: sprig-ag-service
+        relationship: automation-target
+        notes: High-value automation target for flight-runtime and safety-boundary work.
+      - repository: sprig-gcs
+        relationship: automation-target
+        notes: High-value automation target for operator UI and telemetry workflow changes.
+      - repository: sprig-px4xplane
+        relationship: automation-target
+        notes: High-value automation target for simulator-bridge maintenance and packaging work.
